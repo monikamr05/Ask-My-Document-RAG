@@ -1,0 +1,13 @@
+gradio>=4.0.0
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-text-splitters>=0.2.0
+langchain-huggingface>=0.0.1
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
+pypdf>=4.0.0
+pymupdf>=1.24.0
+python-docx>=1.1.0
+python-dotenv>=1.0.0
+openai>=1.0.0
+reportlab>=4.0.0

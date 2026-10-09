@@ -1,0 +1,2 @@
+Artificial Intelligence (AI) Overview:
+AI is a branch of computer science dedicated to developing systems capable of performing tasks that typically require human intelligence. Key subfields include machine learning, deep learning, natural language processing (NLP), and computer vision. In 2026, Retrieval-Augmented Generation (RAG) has become a mainstream approach for grounding LLMs on private enterprise documents without retraining.
