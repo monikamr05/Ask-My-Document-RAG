@@ -697,14 +697,14 @@ if __name__ == "__main__":
     
     # Read host and port:
     # Render and cloud platforms require binding to 0.0.0.0 and listening on $PORT (default 10000)
+    # Local Windows machine uses 127.0.0.1:7860 so the URL is directly clickable in your browser
     port_env = os.getenv("PORT") or os.getenv("GRADIO_SERVER_PORT")
     if port_env:
         server_port = int(port_env)
+        server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
     else:
-        # Default: 7860 on Windows local machine, 10000 on Linux / Render cloud
         server_port = 7860 if os.name == "nt" else 10000
-
-    server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
+        server_name = os.getenv("GRADIO_SERVER_NAME", "127.0.0.1" if os.name == "nt" else "0.0.0.0")
 
     # Dark Theme Token Definitions (Deep Charcoal & Dark Gray)
     dark_theme = gr.themes.Soft(
