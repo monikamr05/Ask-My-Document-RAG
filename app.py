@@ -696,12 +696,16 @@ def create_app() -> gr.Blocks:
 if __name__ == "__main__":
     app = create_app()
     
-    # Read host and port (Render sets $PORT; local PC defaults to 127.0.0.1)
+    # Read host and port:
+    # Render and cloud platforms require binding to 0.0.0.0 and listening on $PORT (default 10000)
     port_env = os.getenv("PORT") or os.getenv("GRADIO_SERVER_PORT")
-    server_port = int(port_env) if port_env else None
-    
-    is_cloud = bool(os.getenv("PORT") or os.getenv("RENDER"))
-    server_name = os.getenv("GRADIO_SERVER_NAME") or ("0.0.0.0" if is_cloud else "127.0.0.1")
+    if port_env:
+        server_port = int(port_env)
+    else:
+        # Default: 7860 on Windows local machine, 10000 on Linux / Render cloud
+        server_port = 7860 if os.name == "nt" else 10000
+
+    server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
 
     # Dark Theme Token Definitions (Deep Charcoal & Dark Gray)
     dark_theme = gr.themes.Soft(
@@ -738,8 +742,7 @@ if __name__ == "__main__":
     </style>
     """
 
-    display_port = server_port if server_port is not None else 7860
-    print(f"[INFO] Launching Ask My Documents RAG on {server_name}:{display_port} (auto-increment if in use)...")
+    print(f"[INFO] Launching Ask My Documents RAG on {server_name}:{server_port}...")
 
     app.launch(
         server_name=server_name,
@@ -748,6 +751,7 @@ if __name__ == "__main__":
         css=CUSTOM_CSS,
         head=head_scripts,
         js="() => { document.documentElement.classList.add('dark'); document.body.classList.add('dark'); }",
+        show_error=True,
         share=False
     )
 

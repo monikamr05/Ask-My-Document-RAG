@@ -12,3 +12,9 @@ services:
         value: openai/gpt-4o-mini
       - key: EMBEDDING_MODEL_NAME
         value: sentence-transformers/all-MiniLM-L6-v2
+      - key: PORT
+        value: 10000
+      - key: GRADIO_SERVER_NAME
+        value: 0.0.0.0
+      - key: GRADIO_SERVER_PORT
+        value: 10000
