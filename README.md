@@ -1,3 +1,14 @@
+---
+title: Ask My Documents - AI RAG Assistant
+emoji: 📑
+colorFrom: indigo
+colorTo: slate
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
+pinned: false
+---
+
 # 📑 Ask My Documents – AI RAG Assistant
 
 A beginner-friendly, production-ready **Retrieval-Augmented Generation (RAG)** web application built with **Python**, **Gradio**, **LangChain**, **FAISS**, **Hugging Face sentence-transformers**, and the **OpenRouter API**.
@@ -192,7 +203,35 @@ You can use any model available on [OpenRouter](https://openrouter.ai/models), i
 
 ---
 
-## ☁️ Deployment to Render
+## ☁️ Deployment Guides
+
+### 1. 🚀 Deploy to Hugging Face Spaces (Recommended for Gradio)
+
+Hugging Face Spaces provides **free, always-on hosting with 16 GB RAM and 2 vCPUs** specifically optimized for Gradio AI applications.
+
+1. Create a free account on [huggingface.co](https://huggingface.co).
+2. Go to [huggingface.co/spaces](https://huggingface.co/spaces) and click **Create new Space**.
+3. Fill in the Space settings:
+   - **Space name**: `ask-my-documents`
+   - **License**: `mit` / `apache-2.0`
+   - **Space SDK**: **Gradio**
+   - **Space hardware**: **Free - 2 vCPU · 16 GB · 50 GB disk**
+4. Choose **Public** (or **Private**) and click **Create Space**.
+5. Connect your GitHub repository or push your code via Git:
+   ```bash
+   git remote add space https://huggingface.co/spaces/YOUR_USERNAME/ask-my-documents
+   git push space main
+   ```
+6. Add your OpenRouter API Key:
+   - In your Space, go to **Settings** > **Variables and secrets**.
+   - Under **Secrets**, click **New secret**.
+   - Key: `OPENROUTER_API_KEY`
+   - Value: `your_openrouter_api_key`
+7. Hugging Face will automatically build and launch your Space within 1-2 minutes!
+
+---
+
+### 2. ⚡ Deploy to Render
 
 1. Push your repository to **GitHub**.
 2. Log into [Render.com](https://render.com) and click **New +** > **Web Service**.
@@ -206,4 +245,5 @@ You can use any model available on [OpenRouter](https://openrouter.ai/models), i
    - `OPENROUTER_MODEL`: `openai/gpt-4o-mini` (optional)
    - `EMBEDDING_MODEL_NAME`: `sentence-transformers/all-MiniLM-L6-v2` (optional)
 6. Click **Create Web Service**! Render will deploy your RAG assistant to a public URL.
+
 
