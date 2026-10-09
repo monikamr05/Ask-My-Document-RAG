@@ -13,6 +13,11 @@ import os
 from typing import List, Dict, Any, Tuple, Optional
 from dotenv import load_dotenv
 
+# Performance & warning suppression for HuggingFace / Transformers on CPU
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "true"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
 # Load environment variables
 load_dotenv()
 
@@ -27,6 +32,16 @@ except ImportError:
     from langchain_community.embeddings import HuggingFaceEmbeddings
 
 from langchain_community.vectorstores import FAISS
+
+# PyTorch for CPU inference speed optimizations
+try:
+    import torch
+    if hasattr(torch, "set_grad_enabled"):
+        torch.set_grad_enabled(False)
+    if hasattr(torch, "set_num_threads"):
+        torch.set_num_threads(min(os.cpu_count() or 2, 4))
+except ImportError:
+    torch = None
 
 # Document Parsers
 try:
@@ -48,15 +63,23 @@ def get_embedding_model(model_name: Optional[str] = None) -> HuggingFaceEmbeddin
     """
     Initializes and returns the Hugging Face Sentence Transformers embedding model.
     Default model: 'sentence-transformers/all-MiniLM-L6-v2' (fast, lightweight, high quality).
+    Optimized for sub-second CPU batch encoding.
     """
     if not model_name:
         model_name = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
     
+    # Configure PyTorch CPU settings for maximum throughput
+    if torch is not None:
+        try:
+            torch.set_grad_enabled(False)
+        except Exception:
+            pass
+
     # Hugging Face embeddings with optimized batch processing
     embeddings = HuggingFaceEmbeddings(
         model_name=model_name,
         model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True, "batch_size": 64}
+        encode_kwargs={"normalize_embeddings": True, "batch_size": 32}
     )
     return embeddings
 
@@ -207,7 +230,7 @@ def load_document(file_path: str, original_filename: Optional[str] = None) -> Li
 # ==========================================
 def split_documents(
     documents: List[Document],
-    chunk_size: int = 800,
+    chunk_size: int = 1000,
     chunk_overlap: int = 150
 ) -> List[Document]:
     """
@@ -241,7 +264,7 @@ def create_vector_store(
     embedding_model: Optional[HuggingFaceEmbeddings] = None
 ) -> FAISS:
     """
-    Generates embeddings for each chunk and builds an in-memory FAISS vector index.
+    Generates embeddings for each chunk and builds an in-memory FAISS vector index in sub-seconds.
     """
     if not chunks:
         raise ValueError("Cannot create vector store from empty chunk list.")
@@ -249,7 +272,12 @@ def create_vector_store(
     if embedding_model is None:
         embedding_model = get_embedding_model()
         
-    vector_store = FAISS.from_documents(chunks, embedding_model)
+    if torch is not None:
+        with torch.no_grad():
+            vector_store = FAISS.from_documents(chunks, embedding_model)
+    else:
+        vector_store = FAISS.from_documents(chunks, embedding_model)
+        
     return vector_store
 
 

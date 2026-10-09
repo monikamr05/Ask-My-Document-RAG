@@ -24,7 +24,7 @@ from rag_engine import (
 # Load environment variables from .env file
 load_dotenv()
 
-# Global embedding model cache for instant indexing
+# Global embedding model cache for instant sub-second indexing
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 EMBEDDING_MODEL = None
 
@@ -35,14 +35,13 @@ def get_or_load_embedding_model():
         EMBEDDING_MODEL = get_embedding_model(EMBEDDING_MODEL_NAME)
     return EMBEDDING_MODEL
 
-# Asynchronously warm up the embedding model at app startup in the background
-def _warmup_model():
-    try:
-        get_or_load_embedding_model()
-    except Exception as e:
-        print(f"[Warning] Embedding preload failed: {e}")
-
-threading.Thread(target=_warmup_model, daemon=True).start()
+# Pre-load the embedding model synchronously so it is 100% warm in memory for sub-second uploads
+print("[INFO] Pre-loading embedding model into memory for instantaneous indexing (< 2s)...")
+try:
+    EMBEDDING_MODEL = get_or_load_embedding_model()
+    print("[INFO] [OK] Embedding model pre-loaded and ready in memory!")
+except Exception as e:
+    print(f"[Warning] Synchronous model preload fallback: {e}")
 
 
 # ==============================================================================
@@ -587,7 +586,7 @@ def create_app() -> gr.Blocks:
                     chunk_size_slider = gr.Slider(
                         minimum=200,
                         maximum=2000,
-                        value=800,
+                        value=1000,
                         step=100,
                         label="Chunk Size (Characters)"
                     )

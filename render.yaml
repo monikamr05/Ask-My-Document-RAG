@@ -3,7 +3,7 @@ services:
     name: ask-my-documents-rag
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
     startCommand: python app.py
     envVars:
       - key: OPENROUTER_API_KEY
@@ -18,3 +18,8 @@ services:
         value: 0.0.0.0
       - key: GRADIO_SERVER_PORT
         value: 10000
+      - key: TOKENIZERS_PARALLELISM
+        value: "false"
+      - key: TRANSFORMERS_NO_ADVISORY_WARNINGS
+        value: "true"
+
