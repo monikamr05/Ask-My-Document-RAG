@@ -205,7 +205,26 @@ You can use any model available on [OpenRouter](https://openrouter.ai/models), i
 
 ## ☁️ Deployment Guides
 
-### 1. 🚀 Deploy to Hugging Face Spaces (Recommended for Gradio)
+### 1. ⚡ Deploy to Vercel (Serverless AI Web App)
+
+This repository includes a dedicated Vercel Serverless entrypoint (`api/index.py` + `vercel.json`) with an embedded modern dark-themed web interface and zero cold-start delay.
+
+1. Push your repository to **GitHub**:
+   ```bash
+   git add .
+   git commit -m "Configure Vercel serverless deployment"
+   git push origin main
+   ```
+2. Log into [Vercel](https://vercel.com) and click **Add New...** > **Project**.
+3. Import your GitHub repository `Ask-My-Document-RAG`.
+4. In **Environment Variables**, add:
+   - `OPENROUTER_API_KEY`: `your_openrouter_api_key`
+   - `OPENROUTER_MODEL`: `openai/gpt-4o-mini` (or your preferred model)
+5. Click **Deploy**! Vercel will build and deploy your application in under 30 seconds.
+
+---
+
+### 2. 🚀 Deploy to Hugging Face Spaces (Gradio)
 
 Hugging Face Spaces provides **free, always-on hosting with 16 GB RAM and 2 vCPUs** specifically optimized for Gradio AI applications.
 
@@ -222,16 +241,11 @@ Hugging Face Spaces provides **free, always-on hosting with 16 GB RAM and 2 vCPU
    git remote add space https://huggingface.co/spaces/YOUR_USERNAME/ask-my-documents
    git push space main
    ```
-6. Add your OpenRouter API Key:
-   - In your Space, go to **Settings** > **Variables and secrets**.
-   - Under **Secrets**, click **New secret**.
-   - Key: `OPENROUTER_API_KEY`
-   - Value: `your_openrouter_api_key`
-7. Hugging Face will automatically build and launch your Space within 1-2 minutes!
+6. Add your OpenRouter API Key in **Settings** > **Variables and secrets**.
 
 ---
 
-### 2. ⚡ Deploy to Render
+### 3. 🛡️ Deploy to Render
 
 1. Push your repository to **GitHub**.
 2. Log into [Render.com](https://render.com) and click **New +** > **Web Service**.
@@ -240,10 +254,8 @@ Hugging Face Spaces provides **free, always-on hosting with 16 GB RAM and 2 vCPU
    - **Environment**: `Python`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python app.py`
-5. In **Environment Variables**, add:
-   - `OPENROUTER_API_KEY`: `your_openrouter_api_key`
-   - `OPENROUTER_MODEL`: `openai/gpt-4o-mini` (optional)
-   - `EMBEDDING_MODEL_NAME`: `sentence-transformers/all-MiniLM-L6-v2` (optional)
-6. Click **Create Web Service**! Render will deploy your RAG assistant to a public URL.
+5. In **Environment Variables**, add `OPENROUTER_API_KEY`.
+6. Click **Create Web Service**.
+
 
 
