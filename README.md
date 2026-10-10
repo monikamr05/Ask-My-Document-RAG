@@ -13,7 +13,7 @@ pinned: false
 
 A beginner-friendly, production-ready **Retrieval-Augmented Generation (RAG)** web application built with **Python**, **Gradio**, **LangChain**, **FAISS**, **Hugging Face sentence-transformers**, and the **OpenRouter API**.
 
-Live Demo: https://ask-my-documents-rag-roeh.onrender.com
+Live Demo: https://ask-my-document-rag.vercel.app/
 
 ---
 
