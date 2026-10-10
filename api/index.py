@@ -202,11 +202,20 @@ class BM25Retriever:
     def score(self, query: str, top_k: int = 4) -> List[Dict[str, Any]]:
         query_tokens = tokenize(query)
         if not query_tokens:
-            return []
+            return [{"chunk": c, "score": 1.0} for c in self.chunks[:top_k]]
 
         k1 = 1.5
         b = 0.75
         scores = []
+        has_positive_score = False
+
+        # Detect broad summarization / overview intent
+        summary_terms = {
+            "summarize", "summary", "overview", "conclusion", "conclusions",
+            "finding", "findings", "takeaway", "takeaways", "main", "points",
+            "key", "about", "outline", "document", "documents"
+        }
+        is_summary_query = bool(set(query_tokens) & summary_terms)
 
         for idx, freqs in enumerate(self.doc_freqs):
             score = 0.0
@@ -228,7 +237,19 @@ class BM25Retriever:
             if query.lower() in chunk_text:
                 score += 3.0
 
+            if score > 0:
+                has_positive_score = True
+
             scores.append((score, self.chunks[idx]))
+
+        if not has_positive_score or is_summary_query:
+            # If summary query or no specific keywords matched, sample evenly across all chunks
+            if len(self.chunks) <= top_k:
+                return [{"chunk": c, "score": 1.0} for c in self.chunks]
+            else:
+                step = max(1, len(self.chunks) // top_k)
+                sampled_chunks = [self.chunks[i] for i in range(0, len(self.chunks), step)][:top_k]
+                return [{"chunk": c, "score": 0.5} for c in sampled_chunks]
 
         # Sort descending by relevance score
         scores.sort(key=lambda x: x[0], reverse=True)
@@ -292,13 +313,13 @@ def generate_rag_answer(
 
     system_prompt = (
         "You are an expert, truthful AI Document Assistant called 'Ask My Documents'.\n"
-        "Your duty is to answer user questions STRICTLY and ONLY using the provided document excerpts below.\n\n"
-        "CRITICAL RULES:\n"
-        "1. Answer based ONLY on the provided Context excerpts.\n"
-        "2. If the answer is NOT explicitly present or cannot be directly deduced from the Context, you MUST respond with: "
-        "'I'm sorry, but based on the provided documents, I could not find information to answer this question.'\n"
-        "3. Never make up facts, guess, or use external world knowledge that is not in the Context.\n"
-        "4. Be concise, well-structured, and cite source references (e.g. [Source 1, Page 2]) when stating key points."
+        "Your duty is to answer user questions accurately based on the provided document excerpts below.\n\n"
+        "GUIDELINES:\n"
+        "1. Ground your answers in the provided Context excerpts.\n"
+        "2. If the user asks for a summary, key findings, conclusions, or overview, synthesize a clear, well-structured response using all relevant information from the excerpts.\n"
+        "3. If the user asks about a specific concept or topic not found in the excerpts, politely explain that the provided document excerpts do not mention it, and briefly explain what the document covers instead.\n"
+        "4. Do not fabricate facts or hallucinate external claims not supported by the document excerpts.\n"
+        "5. Be concise, well-structured with bullet points where helpful, and cite source references (e.g. [Source 1, Page 2]) for key statements."
     )
 
     user_prompt = (
@@ -417,6 +438,7 @@ async def upload_documents(
         "total_words": total_words,
         "files_count": len(file_stats),
         "files": file_stats,
+        "chunks": chunks,
         "message": f"Successfully indexed {len(file_stats)} file(s) into {len(chunks)} chunks ({total_words:,} words)!"
     }
 
@@ -1240,6 +1262,11 @@ INDEX_HTML = """<!DOCTYPE html>
                 
                 if (!res.ok) throw new Error(data.detail || "Upload failed");
 
+                cachedChunks = data.chunks || [];
+                try {
+                    sessionStorage.setItem('rag_cached_chunks', JSON.stringify(cachedChunks));
+                } catch (e) {}
+
                 document.getElementById('statFiles').innerText = data.files_count;
                 document.getElementById('statChunks').innerText = data.chunks_count;
                 document.getElementById('statWords').innerText = Number(data.total_words).toLocaleString();
@@ -1298,12 +1325,22 @@ INDEX_HTML = """<!DOCTYPE html>
             const model = localStorage.getItem('rag_model') || 'openai/gpt-4o-mini';
             const topK = document.getElementById('topKSelect').value || 4;
 
+            if (!cachedChunks || cachedChunks.length === 0) {
+                const stored = sessionStorage.getItem('rag_cached_chunks');
+                if (stored) {
+                    try { cachedChunks = JSON.parse(stored); } catch(e){}
+                }
+            }
+
             const formData = new FormData();
             formData.append('question', query);
             formData.append('session_id', sessionId);
             formData.append('top_k', topK);
             if (apiKey) formData.append('api_key', apiKey);
             if (model) formData.append('model_name', model);
+            if (cachedChunks && cachedChunks.length > 0) {
+                formData.append('client_chunks', JSON.stringify(cachedChunks));
+            }
 
             try {
                 const res = await fetch('/api/ask', {
@@ -1364,6 +1401,8 @@ INDEX_HTML = """<!DOCTYPE html>
             
             sessionId = 'sess_' + Math.random().toString(36).substring(2, 10);
             localStorage.setItem('rag_session_id', sessionId);
+            cachedChunks = [];
+            sessionStorage.removeItem('rag_cached_chunks');
             selectedFiles = [];
             renderFileChips();
             document.getElementById('statFiles').innerText = '0';
